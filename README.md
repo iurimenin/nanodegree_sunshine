@@ -1,3 +1,3 @@
-# nanodegree_sunshine
+# Sunshine
 
 Project Sunshine Udacity Android Nanodegree
