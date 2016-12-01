@@ -1,5 +1,6 @@
 package io.github.iurimenin.sunshine;
 
+import android.content.Intent;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
@@ -13,6 +14,7 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
 
@@ -36,7 +38,7 @@ import java.util.List;
 
 public class ForecastFragment extends Fragment {
 
-    private ArrayAdapter<String> adapter;
+    private ArrayAdapter<String> mForecastAdapter;
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
@@ -57,14 +59,22 @@ public class ForecastFragment extends Fragment {
         list.add("Fri - Foggy - 70/46");
         list.add("Sat - Sunny - 76/68");
 
-        adapter = new ArrayAdapter<>(getActivity(),
+        mForecastAdapter = new ArrayAdapter<>(getActivity(),
                 R.layout.list_item_forecast,
                 R.id.list_item_forecast_textView,
                 list);
 
         ListView listView = (ListView) rootView.findViewById(R.id.listViewForecast);
-        listView.setAdapter(adapter);
-
+        listView.setAdapter(mForecastAdapter);
+        listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
+                String forecast = mForecastAdapter.getItem(i);
+                Intent intent = new Intent(getActivity(), DetailActivity.class);
+                intent.putExtra(Intent.EXTRA_TEXT, forecast);
+                startActivity(intent);
+            }
+        });
         return rootView;
     }
 
@@ -269,8 +279,8 @@ public class ForecastFragment extends Fragment {
 
             if (result == null)
                 return;
-            adapter.clear();
-            adapter.addAll(result);
+            mForecastAdapter.clear();
+            mForecastAdapter.addAll(result);
         }
     }
 }
