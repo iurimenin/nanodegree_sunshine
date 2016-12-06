@@ -33,6 +33,10 @@
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value="io.github.iurimenin.sunshine.activity.MainActivity" />
         </activity>
+
+        <provider
+            android:authorities="io.github.iurimenin.sunshine.app"
+            android:name=".data.WeatherProvider"/>
     </application>
 
 </manifest>
