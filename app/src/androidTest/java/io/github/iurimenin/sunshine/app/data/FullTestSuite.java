@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.github.iurimenin.sunshine.app;
+package io.github.iurimenin.sunshine.app.data;
 
 import android.test.suitebuilder.TestSuiteBuilder;
 
