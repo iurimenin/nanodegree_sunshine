@@ -1,4 +1,4 @@
-package io.github.iurimenin.sunshine;
+package io.github.iurimenin.sunshine.activity;
 
 import android.content.res.Configuration;
 import android.os.Bundle;

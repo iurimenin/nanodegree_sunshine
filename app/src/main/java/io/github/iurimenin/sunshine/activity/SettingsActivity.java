@@ -1,9 +1,11 @@
-package io.github.iurimenin.sunshine;
+package io.github.iurimenin.sunshine.activity;
 
 import android.os.Bundle;
 import android.preference.ListPreference;
 import android.preference.Preference;
 import android.preference.PreferenceManager;
+
+import io.github.iurimenin.sunshine.R;
 
 public class SettingsActivity extends AppCompatPreferenceActivity implements Preference.OnPreferenceChangeListener {
 

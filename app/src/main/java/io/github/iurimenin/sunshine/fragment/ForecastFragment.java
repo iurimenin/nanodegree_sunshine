@@ -1,4 +1,4 @@
-package io.github.iurimenin.sunshine;
+package io.github.iurimenin.sunshine.fragment;
 
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -32,6 +32,9 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+
+import io.github.iurimenin.sunshine.R;
+import io.github.iurimenin.sunshine.activity.DetailActivity;
 
 /**
  * Created by iurimenin on 30/11/16.

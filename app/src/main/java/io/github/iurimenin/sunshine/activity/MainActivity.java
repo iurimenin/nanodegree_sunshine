@@ -1,4 +1,4 @@
-package io.github.iurimenin.sunshine;
+package io.github.iurimenin.sunshine.activity;
 
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -9,6 +9,9 @@ import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
+
+import io.github.iurimenin.sunshine.fragment.ForecastFragment;
+import io.github.iurimenin.sunshine.R;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -23,6 +26,7 @@ public class MainActivity extends AppCompatActivity {
                     .add(R.id.container, new ForecastFragment())
                     .commit();
         }
+        Log.d(LOG_TAG, "onCreate");
     }
 
     @Override
@@ -77,5 +81,35 @@ public class MainActivity extends AppCompatActivity {
             } else {
                 Log.d(LOG_TAG, "Couldn't call " + location + ", no receiving apps installed!");
             }
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        Log.d(LOG_TAG, "onPause");
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        Log.d(LOG_TAG, "onResume");
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+        Log.d(LOG_TAG, "onStop");
+    }
+
+    @Override
+    protected void onStart() {
+        super.onStart();
+        Log.d(LOG_TAG, "onStart");
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        Log.d(LOG_TAG, "onDestroy");
     }
 }
