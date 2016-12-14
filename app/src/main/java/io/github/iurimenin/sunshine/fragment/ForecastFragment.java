@@ -1,6 +1,5 @@
 package io.github.iurimenin.sunshine.fragment;
 
-import android.content.Intent;
 import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.net.Uri;
@@ -21,7 +20,6 @@ import android.widget.AdapterView;
 import android.widget.ListView;
 
 import io.github.iurimenin.sunshine.R;
-import io.github.iurimenin.sunshine.activity.DetailActivity;
 import io.github.iurimenin.sunshine.adapter.ForecastAdapter;
 import io.github.iurimenin.sunshine.asynctask.FetchWeatherTask;
 import io.github.iurimenin.sunshine.data.WeatherContract;
@@ -77,7 +75,7 @@ public class ForecastFragment extends Fragment implements LoaderManager.LoaderCa
                              Bundle savedInstanceState) {
         View rootView = inflater.inflate(R.layout.fragment_main, container, false);
 
-        String locationSetting = Utility.getPreferredLocation(getActivity());
+        final String locationSetting = Utility.getPreferredLocation(getActivity());
 
         // Sort order:  Ascending, by date.
         String sortOrder = WeatherContract.WeatherEntry.COLUMN_DATE + " ASC";
@@ -98,12 +96,12 @@ public class ForecastFragment extends Fragment implements LoaderManager.LoaderCa
                 // if it cannot seek to that position.
                 Cursor cursor = (Cursor) adapterView.getItemAtPosition(i);
                 if (cursor != null) {
-                    String locationSetting = Utility.getPreferredLocation(getActivity());
-                    Intent intent = new Intent(getActivity(), DetailActivity.class)
-                            .setData(WeatherContract.WeatherEntry.buildWeatherLocationWithDate(
-                                    locationSetting, cursor.getLong(COL_WEATHER_DATE)
-                            ));
-                    startActivity(intent);
+                    ((Callback) getActivity())
+                            .onItemSelected(WeatherContract
+                                    .WeatherEntry
+                                    .buildWeatherLocationWithDate(locationSetting,
+                                            cursor.getLong(COL_WEATHER_DATE)));
+
                 }
             }
         });
@@ -170,5 +168,10 @@ public class ForecastFragment extends Fragment implements LoaderManager.LoaderCa
     @Override
     public void onLoaderReset(Loader<Cursor> loader) {
         mForecastAdapter.swapCursor(null);
+    }
+
+    public interface Callback {
+
+        public void onItemSelected(Uri dateUri);
     }
 }
