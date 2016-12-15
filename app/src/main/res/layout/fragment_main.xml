@@ -9,6 +9,7 @@
     tools:context=".activity.MainActivity$ForecastFragment">
 
     <ListView
+        style="@style/ForecastListStyle"
         android:id="@+id/listViewForecast"
         android:layout_width="match_parent"
         android:layout_height="match_parent"/>

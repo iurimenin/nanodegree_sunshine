@@ -39,7 +39,6 @@ public class MainActivity extends AppCompatActivity implements ForecastFragment.
         } else {
             mTwoPane = false;
         }
-
     }
 
     @Override
@@ -110,7 +109,6 @@ public class MainActivity extends AppCompatActivity implements ForecastFragment.
             mLocation = location;
         }
     }
-
 
     @Override
     public void onItemSelected(Uri contentUri) {
