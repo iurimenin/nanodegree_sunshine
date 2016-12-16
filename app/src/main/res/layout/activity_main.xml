@@ -5,7 +5,5 @@
     android:name="io.github.iurimenin.sunshine.fragment.ForecastFragment"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:layout_marginLeft="16dp"
-    android:layout_marginRight="16dp"
     tools:context=".activity.MainActivity"
     tools:layout="@android:layout/list_content" />
