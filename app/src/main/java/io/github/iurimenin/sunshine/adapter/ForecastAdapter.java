@@ -85,8 +85,11 @@ public class ForecastAdapter extends CursorAdapter {
         viewHolder.dateView.setText(Utility.getFriendlyDayString(context, dateInMillis));
 
         String description = cursor.getString(ForecastFragment.COL_WEATHER_DESC);
-        TextView descriptionView = (TextView) view.findViewById(R.id.list_item_forecast_textview);
-        descriptionView.setText(description);
+        // Find TextView and set weather forecast on it
+        viewHolder.descriptionView.setText(description);
+
+        // For accessibility, add a content description to the icon field
+        viewHolder.iconView.setContentDescription(description);
 
         boolean isMetric = Utility.isMetric(context);
         double high = cursor.getDouble(ForecastFragment.COL_WEATHER_MAX_TEMP);
