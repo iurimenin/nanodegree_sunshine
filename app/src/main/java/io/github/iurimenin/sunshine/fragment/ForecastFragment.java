@@ -1,10 +1,9 @@
 package io.github.iurimenin.sunshine.fragment;
 
-import android.content.SharedPreferences;
+import android.content.Intent;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
-import android.preference.PreferenceManager;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.LoaderManager;
@@ -21,8 +20,8 @@ import android.widget.ListView;
 
 import io.github.iurimenin.sunshine.R;
 import io.github.iurimenin.sunshine.adapter.ForecastAdapter;
-import io.github.iurimenin.sunshine.asynctask.FetchWeatherTask;
 import io.github.iurimenin.sunshine.data.WeatherContract;
+import io.github.iurimenin.sunshine.service.SunshineService;
 import io.github.iurimenin.sunshine.utils.Utility;
 
 /**
@@ -155,12 +154,10 @@ public class ForecastFragment extends Fragment implements LoaderManager.LoaderCa
     }
 
     private void updateWeather() {
-        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getActivity());
-        String location = prefs.getString(getString(R.string.pref_location_key),
-                getString(R.string.pref_location_default));
-
-        FetchWeatherTask fetchWeatherTask = new FetchWeatherTask(getContext());
-        fetchWeatherTask.execute(location);
+        Intent intent = new Intent(getActivity(), SunshineService.class);
+        intent.putExtra(SunshineService.LOCATION_QUERY_EXTRA,
+                Utility.getPreferredLocation(getActivity()));
+        getActivity().startService(intent);
     }
 
     @Override
