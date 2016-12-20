@@ -11,6 +11,7 @@ import android.view.MenuItem;
 import io.github.iurimenin.sunshine.R;
 import io.github.iurimenin.sunshine.fragment.DetailFragment;
 import io.github.iurimenin.sunshine.fragment.ForecastFragment;
+import io.github.iurimenin.sunshine.sync.SunshineSyncAdapter;
 import io.github.iurimenin.sunshine.utils.Utility;
 
 public class MainActivity extends AppCompatActivity implements ForecastFragment.Callback {
@@ -44,6 +45,8 @@ public class MainActivity extends AppCompatActivity implements ForecastFragment.
         ForecastFragment forecastFragment =  ((ForecastFragment)getSupportFragmentManager()
                 .findFragmentById(R.id.fragment_forecast));
         forecastFragment.setUseTodayLayout(!mTwoPane);
+
+        SunshineSyncAdapter.initializeSyncAdapter(this);
     }
 
     @Override

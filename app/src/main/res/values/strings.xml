@@ -76,4 +76,6 @@
     <!-- Humidity format CHAR LIMIT=25]-->
     <string name="format_humidity">Humidity: <xliff:g id="humidity">%1.0f</xliff:g> %%</string>
 
+    <string name="sync_account_type">iurimenin.github.io</string>
+    <string name="content_authority">io.github.iurimenin.sunshine.app</string>
 </resources>
