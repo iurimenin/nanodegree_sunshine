@@ -27,3 +27,5 @@ test:
     override:
         - (./gradlew assemble):
             timeout: 360
+        - ./gradlew assembleRelease
+        - cp -r PopularMovies/build/outputs $CIRCLE_ARTIFACTS
