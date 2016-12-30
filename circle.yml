@@ -28,4 +28,4 @@ test:
         - (./gradlew assemble):
             timeout: 360
         - ./gradlew assembleRelease
-        - cp -r nanodegree_sunshine/build/outputs $CIRCLE_ARTIFACTS
+        - cp -r /home/ubuntu/nanodegree_sunshine/build/outputs $CIRCLE_ARTIFACTS
