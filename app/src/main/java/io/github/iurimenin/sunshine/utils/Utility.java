@@ -12,6 +12,7 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 
 import io.github.iurimenin.sunshine.R;
+import io.github.iurimenin.sunshine.activity.SettingsActivity;
 import io.github.iurimenin.sunshine.sync.SunshineSyncAdapter;
 
 /**
@@ -268,5 +269,16 @@ public class Utility {
     static public @SunshineSyncAdapter.LocationStatus int getLocationStatus(Context c){
         SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(c);
         return sp.getInt(c.getString(R.string.pref_location_status_key), SunshineSyncAdapter.LOCATION_STATUS_UNKNOWN);
+    }
+
+    /**
+     * Resets the location status.  (Sets it to SunshineSyncAdapter.LOCATION_STATUS_UNKNOWN)
+     * @param c Context used to get the SharedPreferences
+     */
+    static public void resetLocationStatus(Context c){
+       SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(c);
+       SharedPreferences.Editor spe = sp.edit();
+       spe.putInt(c.getString(R.string.pref_location_status_key), SunshineSyncAdapter.LOCATION_STATUS_UNKNOWN);
+       spe.apply();
     }
 }
