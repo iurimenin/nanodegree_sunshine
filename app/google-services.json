@@ -1,0 +1,42 @@
+{
+  "project_info": {
+    "project_number": "994465651820",
+    "firebase_url": "https://nanodegree-sunshine-902d4.firebaseio.com",
+    "project_id": "nanodegree-sunshine-902d4",
+    "storage_bucket": "nanodegree-sunshine-902d4.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:994465651820:android:03598485b5ef9bc7",
+        "android_client_info": {
+          "package_name": "io.github.iurimenin.sunshine"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "994465651820-oa4990jj86up9r836h38ijermd5u65ra.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDXUBFl9XI_g13ta-Yl3nNb4MTEBNiSGLc"
+        }
+      ],
+      "services": {
+        "analytics_service": {
+          "status": 1
+        },
+        "appinvite_service": {
+          "status": 1,
+          "other_platform_oauth_client": []
+        },
+        "ads_service": {
+          "status": 2
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
