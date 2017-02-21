@@ -12,6 +12,8 @@
         android:name="android.permission.AUTHENTICATE_ACCOUNTS"/>
     <uses-permission
         android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <uses-permission
+        android:name="android.permission.ACCESS_FINE_LOCATION" />
 
     <!-- Permissions required for Google Cloud Messaging -->
     <uses-permission android:name="android.permission.WAKE_LOCK" />
@@ -94,6 +96,9 @@
                 <action android:name="com.google.firebase.INSTANCE_ID_EVENT" />
             </intent-filter>
         </service>
+        <meta-data
+            android:name="com.google.android.geo.API_KEY"
+            android:value="AIzaSyDXUBFl9XI_g13ta-Yl3nNb4MTEBNiSGLc" />
     </application>
 
 

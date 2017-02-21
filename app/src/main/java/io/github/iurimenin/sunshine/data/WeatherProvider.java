@@ -246,7 +246,7 @@ public class WeatherProvider extends ContentProvider {
 
         switch (match) {
             case WEATHER:
-                rowsDeleted = db.delete(WeatherContract.WeatherEntry.TABLE_NAME, null, null);
+                rowsDeleted = db.delete(WeatherContract.WeatherEntry.TABLE_NAME, selection, selectionArgs);
                 break;
             case LOCATION :
                 rowsDeleted = db.delete(WeatherContract.LocationEntry.TABLE_NAME, null, selectionArgs);
