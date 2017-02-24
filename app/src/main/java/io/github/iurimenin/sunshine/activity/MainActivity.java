@@ -20,6 +20,7 @@ import com.google.android.gms.common.GoogleApiAvailability;
 
 import io.github.iurimenin.sunshine.R;
 import io.github.iurimenin.sunshine.adapter.ForecastAdapter;
+import io.github.iurimenin.sunshine.data.WeatherContract;
 import io.github.iurimenin.sunshine.fragment.DetailFragment;
 import io.github.iurimenin.sunshine.fragment.ForecastFragment;
 import io.github.iurimenin.sunshine.gcm.RegistrationIntentService;
@@ -41,6 +42,8 @@ public class MainActivity extends AppCompatActivity implements ForecastFragment.
         super.onCreate(savedInstanceState);
 
         mLocation = Utility.getPreferredLocation(this);
+        Uri contentUri = getIntent() != null ? getIntent().getData() : null;
+
         setContentView(R.layout.activity_main);
 
         Toolbar toolbar = (Toolbar)findViewById(R.id.toolbar);
@@ -51,9 +54,14 @@ public class MainActivity extends AppCompatActivity implements ForecastFragment.
             mTwoPane = true;
 
             if (savedInstanceState == null) {
+                DetailFragment fragment = new DetailFragment();
+                if (contentUri != null) {
+                    Bundle args = new Bundle();
+                    args.putParcelable(DetailFragment.DETAIL_URI, contentUri);
+                    fragment.setArguments(args);
+                }
                 getSupportFragmentManager().beginTransaction()
-                        .replace(R.id.weather_detail_container,
-                                new DetailFragment(), DETAILFRAGMENT_TAG)
+                        .replace(R.id.weather_detail_container, fragment, DETAILFRAGMENT_TAG)
                         .commit();
             }
         } else {
@@ -64,6 +72,11 @@ public class MainActivity extends AppCompatActivity implements ForecastFragment.
         ForecastFragment forecastFragment =  ((ForecastFragment)getSupportFragmentManager()
                 .findFragmentById(R.id.fragment_forecast));
         forecastFragment.setUseTodayLayout(!mTwoPane);
+
+        if (contentUri != null) {
+            forecastFragment.setInitialSelectedDate(
+                    WeatherContract.WeatherEntry.getDateFromUri(contentUri));
+        }
 
         SunshineSyncAdapter.initializeSyncAdapter(this);
 

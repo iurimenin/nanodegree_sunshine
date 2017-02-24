@@ -48,6 +48,7 @@ dependencies {
     compile "com.google.android.gms:play-services-places:${firebaseVersion}"
     compile "com.google.firebase:firebase-messaging:${firebaseVersion}"
     compile "com.google.firebase:firebase-crash:${firebaseVersion}"
+    compile 'com.google.android.apps.muzei:muzei-api:2.0'
 }
 
 apply plugin: 'com.google.gms.google-services'
