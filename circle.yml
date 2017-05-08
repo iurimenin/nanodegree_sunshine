@@ -20,7 +20,7 @@ dependencies:
       - if [ ! -d "/usr/local/android-sdk-linux/extras/android/m2repository/com/android/support/support-v4/25.0.2" ]; then echo y | android update sdk --no-ui --all --filter "extra-android-m2repository"; fi
       # Google Support Repository, revision 40 / Local Maven repository for Support Libraries
       #- if [ ! -d "/usr/local/android-sdk-linux/extras/google/m2repository/com/google/firebase/firebase-core/10.0.1" ]; then echo y | android update sdk --no-ui --all --filter "extra-google-m2repository"; fi
-      echo y | android update sdk --no-ui --all --filter "extra-google-m2repository"
+      echo y | android update sdk --no-ui --all --filter "extra-google-m2repository"; fi
       - mkdir $ANDROID_HOME/licenses; ls -l $ANDROID_HOME/licenses
       - cp --force licenses/* $ANDROID_HOME/licenses; ls -l $ANDROID_HOME/licenses
 
