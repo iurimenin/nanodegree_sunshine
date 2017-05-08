@@ -2,7 +2,7 @@ apply plugin: 'com.android.application'
 
 android {
     compileSdkVersion 25
-    buildToolsVersion "24.0.3"
+    buildToolsVersion '25.0.2'
     defaultConfig {
         applicationId "io.github.iurimenin.sunshine"
         minSdkVersion 15
@@ -46,6 +46,7 @@ dependencies {
     compile "com.google.android.gms:play-services-gcm:${firebaseVersion}"
     compile "com.google.android.gms:play-services-location:${firebaseVersion}"
     compile "com.google.android.gms:play-services-places:${firebaseVersion}"
+    compile "com.google.android.gms:play-services-wearable:${firebaseVersion}"
     compile "com.google.firebase:firebase-messaging:${firebaseVersion}"
     compile "com.google.firebase:firebase-crash:${firebaseVersion}"
     compile 'com.google.android.apps.muzei:muzei-api:2.0'
