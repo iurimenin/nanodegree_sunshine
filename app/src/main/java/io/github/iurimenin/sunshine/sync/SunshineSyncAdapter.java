@@ -24,6 +24,8 @@ import android.os.Build;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.support.annotation.IntDef;
+import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 import android.support.v4.app.NotificationCompat;
 import android.support.v4.app.TaskStackBuilder;
 import android.text.format.Time;
@@ -61,8 +63,10 @@ import io.github.iurimenin.sunshine.data.WeatherContract;
 import io.github.iurimenin.sunshine.muzei.WeatherMuzeiSource;
 import io.github.iurimenin.sunshine.utils.Utility;
 
-public class SunshineSyncAdapter extends AbstractThreadedSyncAdapter {
-    public final String LOG_TAG = SunshineSyncAdapter.class.getSimpleName();
+public class SunshineSyncAdapter extends AbstractThreadedSyncAdapter
+        implements GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener {
+
+    public final String TAG = SunshineSyncAdapter.class.getSimpleName();
     // Interval at which to sync with the weather, in seconds.
     // 60 seconds (1 minute) * 180 = 3 hours
     public static final int SYNC_INTERVAL = 60 * 180;
@@ -79,11 +83,56 @@ public class SunshineSyncAdapter extends AbstractThreadedSyncAdapter {
             WeatherContract.WeatherEntry.COLUMN_SHORT_DESC
     };
 
+    private GoogleApiClient mGoogleApiClient;
+
+    private double minTemp;
+    double maxTemp;
+    Bitmap largeIcon = null;
+    private static final String TEMP_ICON_KEY = "icon";
+    private static final String TEMP_MIN_KEY = "temp_min";
+    private static final String TEMP_MAX_KEY = "temp_max";
+
     // these indices must match the projection
     private static final int INDEX_WEATHER_ID = 0;
     private static final int INDEX_MAX_TEMP = 1;
     private static final int INDEX_MIN_TEMP = 2;
     private static final int INDEX_SHORT_DESC = 3;
+
+    @Override
+    public void onConnected(@Nullable Bundle bundle) {
+        Log.d(TAG, "onConnected");
+
+        Asset asset = createAssetFromBitmap(largeIcon);
+        PutDataMapRequest putDataMapReq = PutDataMapRequest.create("/weather");
+        putDataMapReq.getDataMap().putDouble(TEMP_MIN_KEY, minTemp);
+        putDataMapReq.getDataMap().putDouble(TEMP_MAX_KEY, maxTemp);
+        putDataMapReq.getDataMap().putAsset(TEMP_ICON_KEY, asset);
+        PutDataRequest putDataReq = putDataMapReq.asPutDataRequest();
+        putDataReq.setUrgent();
+        Log.d(TAG, "updateWear");
+        Wearable.DataApi.putDataItem(mGoogleApiClient, putDataReq).setResultCallback(
+                new ResultCallback<DataApi.DataItemResult>() {
+                    @Override
+                    public void onResult(DataApi.DataItemResult dataItemResult) {
+                        if (!dataItemResult.getStatus().isSuccess()) {
+                            Log.d(TAG, "buildWatchOnlyNotification(): Failed to set the data, "
+                                    + "status: " + dataItemResult.getStatus().getStatusCode());
+                        }
+                        mGoogleApiClient.disconnect();
+                    }
+                }
+        );
+    }
+
+    @Override
+    public void onConnectionSuspended(int i) {
+        Log.d(TAG, "onConnectionSuspended");
+    }
+
+    @Override
+    public void onConnectionFailed(@NonNull ConnectionResult connectionResult) {
+        Log.d(TAG, "onConnectionFailed");
+    }
 
     @Retention(RetentionPolicy.SOURCE)
     @IntDef({LOCATION_STATUS_OK, LOCATION_STATUS_SERVER_DOWN, LOCATION_STATUS_SERVER_INVALID,  LOCATION_STATUS_UNKNOWN, LOCATION_STATUS_INVALID})
@@ -95,21 +144,19 @@ public class SunshineSyncAdapter extends AbstractThreadedSyncAdapter {
     public static final int LOCATION_STATUS_UNKNOWN = 3;
     public static final int LOCATION_STATUS_INVALID = 4;
 
-    private GoogleApiClient mGoogleApiClient;
-    private double minTemp;
-    double maxTemp;
-    Bitmap largeIcon = null;
-    private static final String TEMP_ICON_KEY = "com.example.android.sunshine.key.icon";
-    private static final String TEMP_MIN_KEY = "com.example.android.sunshine.key.temp.min";
-    private static final String TEMP_MAX_KEY = "com.example.android.sunshine.key.temp.max";
-
     public SunshineSyncAdapter(Context context, boolean autoInitialize) {
         super(context, autoInitialize);
+
+        mGoogleApiClient = new GoogleApiClient.Builder(context)
+                .addConnectionCallbacks(this)
+                .addOnConnectionFailedListener(this)
+                .addApi(Wearable.API)
+                .build();
     }
 
     @Override
     public void onPerformSync(Account account, Bundle extras, String authority, ContentProviderClient provider, SyncResult syncResult) {
-        Log.d(LOG_TAG, "Starting sync");
+        Log.d(TAG, "Starting sync");
 
         // We no longer need just the location String, but also potentially the latitude and
         // longitude, in case we are syncing based on a new Place Picker API result.
@@ -196,12 +243,12 @@ public class SunshineSyncAdapter extends AbstractThreadedSyncAdapter {
             forecastJsonStr = buffer.toString();
             getWeatherDataFromJson(forecastJsonStr, locationQuery);
         } catch (IOException e) {
-            Log.e(LOG_TAG, "Error ", e);
+            Log.d(TAG, "Error ", e);
             // If the code didn't successfully get the weather data, there's no point in attempting
             // to parse it.
             setLocationStatus(getContext(), LOCATION_STATUS_SERVER_DOWN);
         } catch (JSONException e) {
-            Log.e(LOG_TAG, e.getMessage(), e);
+            Log.d(TAG, e.getMessage(), e);
             e.printStackTrace();
             setLocationStatus(getContext(), LOCATION_STATUS_SERVER_INVALID);
         } finally {
@@ -212,7 +259,7 @@ public class SunshineSyncAdapter extends AbstractThreadedSyncAdapter {
                 try {
                     reader.close();
                 } catch (final IOException e) {
-                    Log.e(LOG_TAG, "Error closing stream", e);
+                    Log.d(TAG, "Error closing stream", e);
                 }
             }
         }
@@ -392,11 +439,11 @@ public class SunshineSyncAdapter extends AbstractThreadedSyncAdapter {
                 notifyWeather();
                 updateWear();
             }
-            Log.d(LOG_TAG, "Sync Complete. " + cVVector.size() + " Inserted");
+            Log.d(TAG, "Sync Complete. " + cVVector.size() + " Inserted");
             setLocationStatus(getContext(), LOCATION_STATUS_OK);
 
         } catch (JSONException e) {
-            Log.e(LOG_TAG, e.getMessage(), e);
+            Log.d(TAG, e.getMessage(), e);
             e.printStackTrace();
             setLocationStatus(getContext(), LOCATION_STATUS_SERVER_INVALID);
         }
@@ -427,55 +474,12 @@ public class SunshineSyncAdapter extends AbstractThreadedSyncAdapter {
                         .fitCenter()
                         .into(largeIconSize, largeIconSize).get();
             } catch (InterruptedException | ExecutionException e) {
-                Log.e(LOG_TAG, "Error retrieving large icon from " + artUrl, e);
+                Log.d(TAG, "Error retrieving large icon from " + artUrl, e);
                 largeIcon = BitmapFactory.decodeResource(resources, artResourceId);
             }
         }
 
-        final String TAG = "Wear Date Layer";
-        mGoogleApiClient = new GoogleApiClient.Builder(getContext())
-                .addConnectionCallbacks(new GoogleApiClient.ConnectionCallbacks() {
-                    @Override
-                    public void onConnected(Bundle connectionHint) {
-                        Log.d(TAG, "onConnected: " + connectionHint);
-                        // Now you can use the Data Layer API
-                    }
-
-                    @Override
-                    public void onConnectionSuspended(int cause) {
-                        Log.d(TAG, "onConnectionSuspended: " + cause);
-                    }
-                })
-                .addOnConnectionFailedListener(new GoogleApiClient.OnConnectionFailedListener() {
-                    @Override
-                    public void onConnectionFailed(ConnectionResult result) {
-                        Log.d(TAG, "onConnectionFailed: " + result);
-                    }
-                })
-                // Request access only to the Wearable API
-                .addApi(Wearable.API)
-                .build();
-
         mGoogleApiClient.connect();
-
-        Asset asset = createAssetFromBitmap(largeIcon);
-        PutDataMapRequest putDataMapReq = PutDataMapRequest.create("/weather");
-        putDataMapReq.getDataMap().putDouble(TEMP_MIN_KEY, minTemp);
-        putDataMapReq.getDataMap().putDouble(TEMP_MAX_KEY, maxTemp);
-        putDataMapReq.getDataMap().putAsset(TEMP_ICON_KEY, asset);
-        PutDataRequest putDataReq = putDataMapReq.asPutDataRequest();
-        Wearable.DataApi.putDataItem(mGoogleApiClient, putDataReq).setResultCallback(
-                new ResultCallback<DataApi.DataItemResult>() {
-                    @Override
-                    public void onResult(DataApi.DataItemResult dataItemResult) {
-                        if (!dataItemResult.getStatus().isSuccess()) {
-                            Log.e(TAG, "buildWatchOnlyNotification(): Failed to set the data, "
-                                    + "status: " + dataItemResult.getStatus().getStatusCode());
-                        }
-                        mGoogleApiClient.disconnect();
-                    }
-                }
-        );
     }
 
     private static Asset createAssetFromBitmap(Bitmap bitmap) {
@@ -557,7 +561,7 @@ public class SunshineSyncAdapter extends AbstractThreadedSyncAdapter {
                                 .fitCenter()
                                 .into(largeIconWidth, largeIconHeight).get();
                     } catch (InterruptedException | ExecutionException e) {
-                        Log.e(LOG_TAG, "Error retrieving large icon from " + artUrl, e);
+                        Log.d(TAG, "Error retrieving large icon from " + artUrl, e);
                         largeIcon = BitmapFactory.decodeResource(resources, artResourceId);
                     }
                     String title = context.getString(R.string.app_name);

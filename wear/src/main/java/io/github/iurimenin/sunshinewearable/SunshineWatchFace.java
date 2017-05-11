@@ -31,6 +31,8 @@ import android.graphics.Typeface;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
+import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 import android.support.wearable.watchface.CanvasWatchFaceService;
 import android.support.wearable.watchface.WatchFaceStyle;
 import android.text.format.Time;
@@ -65,6 +67,8 @@ public class SunshineWatchFace extends CanvasWatchFaceService {
     private static final Typeface NORMAL_TYPEFACE =
             Typeface.create(Typeface.SANS_SERIF, Typeface.NORMAL);
 
+    private static final String TAG = "SunshineWatchFace";
+
     /**
      * Update rate in milliseconds for interactive mode. We update once a second since seconds are
      * displayed in interactive mode.
@@ -78,6 +82,7 @@ public class SunshineWatchFace extends CanvasWatchFaceService {
 
     @Override
     public Engine onCreateEngine() {
+        Log.d(TAG, "onCreateEngine");
         return new Engine();
     }
 
@@ -101,7 +106,10 @@ public class SunshineWatchFace extends CanvasWatchFaceService {
         }
     }
 
-    private class Engine extends CanvasWatchFaceService.Engine {
+    private class Engine extends CanvasWatchFaceService.Engine implements
+            GoogleApiClient.ConnectionCallbacks,
+            GoogleApiClient.OnConnectionFailedListener {
+
         final Handler mUpdateTimeHandler = new EngineHandler(this);
         boolean mRegisteredTimeZoneReceiver = false;
         Paint mBackgroundPaint;
@@ -113,14 +121,12 @@ public class SunshineWatchFace extends CanvasWatchFaceService {
         Paint mTextTempBoldPaint;
         Paint mDividerPaint;
 
-        // Wear sync
-        final String TAG = "Wear Sync";
         String maxTemp = "";
         String minTemp = "";
         Bitmap mWeatherBitmap;
-        private static final String TEMP_ICON_KEY = "com.example.android.sunshine.key.icon";
-        private static final String TEMP_MIN_KEY = "com.example.android.sunshine.key.temp.min";
-        private static final String TEMP_MAX_KEY = "com.example.android.sunshine.key.temp.max";
+        private static final String TEMP_ICON_KEY = "icon";
+        private static final String TEMP_MIN_KEY = "temp_min";
+        private static final String TEMP_MAX_KEY = "temp_max";
 
         private GoogleApiClient mGoogleApiClient;
         Calendar mCalendar;
@@ -146,52 +152,6 @@ public class SunshineWatchFace extends CanvasWatchFaceService {
          * disable anti-aliasing in ambient mode.
          */
         boolean mLowBitAmbient;
-
-        DataApi.DataListener dataListener = new DataApi.DataListener() {
-            @Override
-            public void onDataChanged(DataEventBuffer dataEvents) {
-                Log.v(TAG, "HIT!");
-                for (DataEvent event : dataEvents) {
-                    if (event.getType() == DataEvent.TYPE_CHANGED) {
-                        // DataItem changed
-                        DataItem item = event.getDataItem();
-                        if (item.getUri().getPath().compareTo("/weather") == 0) {
-                            DataMap dataMap = DataMapItem.fromDataItem(item).getDataMap();
-                            minTemp = Math.round(dataMap.getDouble(TEMP_MIN_KEY)) + "°";
-                            maxTemp = Math.round(dataMap.getDouble(TEMP_MAX_KEY)) + "°";
-                            Asset profileAsset = dataMap.getAsset(TEMP_ICON_KEY);
-                            mWeatherBitmap = loadBitmapFromAsset(profileAsset);
-                            //Log.v(TAG, "Testing 1 2 3" + dataMap.getInt(COUNT_KEY));
-                        }
-                    } else if (event.getType() == DataEvent.TYPE_DELETED) {
-                        // DataItem deleted
-                    }
-                }
-            }
-
-            public Bitmap loadBitmapFromAsset(Asset asset) {
-                if (asset == null) {
-                    throw new IllegalArgumentException("Asset must be non-null");
-                }
-                ConnectionResult result =
-                        mGoogleApiClient.blockingConnect(5000, TimeUnit.MILLISECONDS);
-                if (!result.isSuccess()) {
-                    return null;
-                }
-                // convert asset into a file descriptor and block until it's ready
-                InputStream assetInputStream = Wearable.DataApi.getFdForAsset(
-                        mGoogleApiClient, asset).await().getInputStream();
-                // Argh don't discount the watch!
-                //mGoogleApiClient.disconnect();
-
-                if (assetInputStream == null) {
-                    Log.w(TAG, "Requested an unknown Asset.");
-                    return null;
-                }
-                // decode the stream into a bitmap
-                return BitmapFactory.decodeStream(assetInputStream);
-            }
-        };
 
         @Override
         public void onCreate(SurfaceHolder holder) {
@@ -238,28 +198,11 @@ public class SunshineWatchFace extends CanvasWatchFaceService {
             mDateFormat = new SimpleDateFormat("ccc, MMM d yyyy");
             mDateFormat.setCalendar(mCalendar);
 
-            mGoogleApiClient = new GoogleApiClient.Builder(getApplicationContext())
-                    .addConnectionCallbacks(new GoogleApiClient.ConnectionCallbacks() {
-                        @Override
-                        public void onConnected(Bundle connectionHint) {
-                            Wearable.DataApi.addListener(mGoogleApiClient, dataListener);
-                        }
-
-                        @Override
-                        public void onConnectionSuspended(int cause) {
-                            Log.d(TAG, "onConnectionSuspended: " + cause);
-                        }
-                    })
-                    .addOnConnectionFailedListener(new GoogleApiClient.OnConnectionFailedListener() {
-                        @Override
-                        public void onConnectionFailed(ConnectionResult result) {
-                            Log.d(TAG, "onConnectionFailed: " + result);
-                        }
-                    })
-                    // Request access only to the Wearable API
+            mGoogleApiClient = new GoogleApiClient.Builder(SunshineWatchFace.this)
                     .addApi(Wearable.API)
+                    .addConnectionCallbacks(this)
+                    .addOnConnectionFailedListener(this)
                     .build();
-
             mGoogleApiClient.connect();
         }
 
@@ -525,5 +468,65 @@ public class SunshineWatchFace extends CanvasWatchFaceService {
                 mUpdateTimeHandler.sendEmptyMessageDelayed(MSG_UPDATE_TIME, delayMs);
             }
         }
+
+        @Override
+        public void onConnected(@Nullable Bundle bundle) {
+            Log.d(TAG, "onConnected");
+            Wearable.DataApi.addListener(mGoogleApiClient, dataListener);
+        }
+
+        @Override
+        public void onConnectionSuspended(int i) {
+            Log.d(TAG, "onConnectionSuspended: " + i);
+        }
+
+        @Override
+        public void onConnectionFailed(@NonNull ConnectionResult connectionResult) {
+            Log.d(TAG, "Connection failed");
+        }
+
+        DataApi.DataListener dataListener = new DataApi.DataListener() {
+            @Override
+            public void onDataChanged(DataEventBuffer dataEvents) {
+                Log.d(TAG, "onDataChanged");
+                for (DataEvent event : dataEvents) {
+                    if (event.getType() == DataEvent.TYPE_CHANGED) {
+                        // DataItem changed
+                        DataItem item = event.getDataItem();
+                        if (item.getUri().getPath().compareTo("/weather") == 0) {
+                            DataMap dataMap = DataMapItem.fromDataItem(item).getDataMap();
+                            minTemp = Math.round(dataMap.getDouble(TEMP_MIN_KEY)) + "°";
+                            maxTemp = Math.round(dataMap.getDouble(TEMP_MAX_KEY)) + "°";
+                            Asset profileAsset = dataMap.getAsset(TEMP_ICON_KEY);
+                            mWeatherBitmap = loadBitmapFromAsset(profileAsset);
+                            //Log.v(TAG, "Testing 1 2 3" + dataMap.getInt(COUNT_KEY));
+                        }
+                    }
+                }
+            }
+
+            public Bitmap loadBitmapFromAsset(Asset asset) {
+                if (asset == null) {
+                    throw new IllegalArgumentException("Asset must be non-null");
+                }
+                ConnectionResult result =
+                        mGoogleApiClient.blockingConnect(5000, TimeUnit.MILLISECONDS);
+                if (!result.isSuccess()) {
+                    return null;
+                }
+                // convert asset into a file descriptor and block until it's ready
+                InputStream assetInputStream = Wearable.DataApi.getFdForAsset(
+                        mGoogleApiClient, asset).await().getInputStream();
+                // Argh don't discount the watch!
+                //mGoogleApiClient.disconnect();
+
+                if (assetInputStream == null) {
+                    Log.d(TAG, "Requested an unknown Asset.");
+                    return null;
+                }
+                // decode the stream into a bitmap
+                return BitmapFactory.decodeStream(assetInputStream);
+            }
+        };
     }
 }
