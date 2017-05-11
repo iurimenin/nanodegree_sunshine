@@ -27,7 +27,7 @@ android {
 
 ext {
     firebaseVersion = "9.4.0"
-    androidSupportVersion = "25.1.0"
+    androidSupportVersion = "25.2.0"
 }
 
 dependencies {
@@ -50,6 +50,7 @@ dependencies {
     compile "com.google.firebase:firebase-messaging:${firebaseVersion}"
     compile "com.google.firebase:firebase-crash:${firebaseVersion}"
     compile 'com.google.android.apps.muzei:muzei-api:2.0'
+    compile 'com.google.android.support:wearable:2.0.1'
 }
 
 apply plugin: 'com.google.gms.google-services'
