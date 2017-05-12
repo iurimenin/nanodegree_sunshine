@@ -34,9 +34,7 @@ import android.util.Log;
 import com.bumptech.glide.Glide;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
-import com.google.android.gms.common.api.ResultCallback;
 import com.google.android.gms.wearable.Asset;
-import com.google.android.gms.wearable.DataApi;
 import com.google.android.gms.wearable.PutDataMapRequest;
 import com.google.android.gms.wearable.PutDataRequest;
 import com.google.android.gms.wearable.Wearable;
@@ -63,18 +61,20 @@ import io.github.iurimenin.sunshine.data.WeatherContract;
 import io.github.iurimenin.sunshine.muzei.WeatherMuzeiSource;
 import io.github.iurimenin.sunshine.utils.Utility;
 
-public class SunshineSyncAdapter extends AbstractThreadedSyncAdapter
-        implements GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener {
+public class SunshineSyncAdapter extends AbstractThreadedSyncAdapter implements
+        GoogleApiClient.ConnectionCallbacks,
+        GoogleApiClient.OnConnectionFailedListener {
 
-    public final String TAG = SunshineSyncAdapter.class.getSimpleName();
+    public static final String TAG = SunshineSyncAdapter.class.getSimpleName();
+    public static final String ACTION_DATA_UPDATED =
+            "io.github.iurimenin.sunshine.app.ACTION_DATA_UPDATED";
+
     // Interval at which to sync with the weather, in seconds.
     // 60 seconds (1 minute) * 180 = 3 hours
     public static final int SYNC_INTERVAL = 60 * 180;
     public static final int SYNC_FLEXTIME = SYNC_INTERVAL/3;
     private static final long DAY_IN_MILLIS = 1000 * 60 * 60 * 24;
     private static final int WEATHER_NOTIFICATION_ID = 3004;
-    public static final String ACTION_DATA_UPDATED =
-            "io.github.iurimenin.sunshine.app.ACTION_DATA_UPDATED";
 
     private static final String[] NOTIFY_WEATHER_PROJECTION = new String[] {
             WeatherContract.WeatherEntry.COLUMN_WEATHER_ID,
@@ -83,45 +83,17 @@ public class SunshineSyncAdapter extends AbstractThreadedSyncAdapter
             WeatherContract.WeatherEntry.COLUMN_SHORT_DESC
     };
 
-    private GoogleApiClient mGoogleApiClient;
-
-    private double minTemp;
-    double maxTemp;
-    Bitmap largeIcon = null;
-    private static final String TEMP_ICON_KEY = "icon";
-    private static final String TEMP_MIN_KEY = "temp_min";
-    private static final String TEMP_MAX_KEY = "temp_max";
-
     // these indices must match the projection
     private static final int INDEX_WEATHER_ID = 0;
     private static final int INDEX_MAX_TEMP = 1;
     private static final int INDEX_MIN_TEMP = 2;
     private static final int INDEX_SHORT_DESC = 3;
 
+    private GoogleApiClient mGoogleApiClient;
+
     @Override
     public void onConnected(@Nullable Bundle bundle) {
         Log.d(TAG, "onConnected");
-
-        Asset asset = createAssetFromBitmap(largeIcon);
-        PutDataMapRequest putDataMapReq = PutDataMapRequest.create("/weather");
-        putDataMapReq.getDataMap().putDouble(TEMP_MIN_KEY, minTemp);
-        putDataMapReq.getDataMap().putDouble(TEMP_MAX_KEY, maxTemp);
-        putDataMapReq.getDataMap().putAsset(TEMP_ICON_KEY, asset);
-        PutDataRequest putDataReq = putDataMapReq.asPutDataRequest();
-        putDataReq.setUrgent();
-        Log.d(TAG, "updateWear");
-        Wearable.DataApi.putDataItem(mGoogleApiClient, putDataReq).setResultCallback(
-                new ResultCallback<DataApi.DataItemResult>() {
-                    @Override
-                    public void onResult(DataApi.DataItemResult dataItemResult) {
-                        if (!dataItemResult.getStatus().isSuccess()) {
-                            Log.d(TAG, "buildWatchOnlyNotification(): Failed to set the data, "
-                                    + "status: " + dataItemResult.getStatus().getStatusCode());
-                        }
-                        mGoogleApiClient.disconnect();
-                    }
-                }
-        );
     }
 
     @Override
@@ -152,6 +124,28 @@ public class SunshineSyncAdapter extends AbstractThreadedSyncAdapter
                 .addOnConnectionFailedListener(this)
                 .addApi(Wearable.API)
                 .build();
+
+        mGoogleApiClient.connect();
+    }
+
+    private void updateWear(){
+        Context context = getContext();
+        String location = Utility.getPreferredLocation(context);
+        Uri whether = WeatherContract.WeatherEntry.buildWeatherLocationWithDate(location, System.currentTimeMillis());
+        Cursor cursor = context.getContentResolver().query(whether,NOTIFY_WEATHER_PROJECTION,null,null,null);
+        if(cursor != null && cursor.moveToFirst()){
+            int wheather = cursor.getInt(INDEX_WEATHER_ID);
+            double maxTmp = cursor.getDouble(INDEX_MAX_TEMP);
+            double minTmp = cursor.getDouble(INDEX_MIN_TEMP);
+            PutDataMapRequest putDataMapRequest = PutDataMapRequest.create("/wear-wheather");
+            putDataMapRequest.getDataMap().putInt("WHEATHER", wheather);
+            putDataMapRequest.getDataMap().putDouble("MAX_TEMP", maxTmp);
+            putDataMapRequest.getDataMap().putDouble("MIN_TEMP", minTmp);
+            putDataMapRequest.getDataMap().putLong("TIME", System.currentTimeMillis());
+            PutDataRequest dataMapRequest = putDataMapRequest.asPutDataRequest();
+            Wearable.DataApi.putDataItem(mGoogleApiClient,dataMapRequest.setUrgent());
+
+        }
     }
 
     @Override
@@ -447,39 +441,6 @@ public class SunshineSyncAdapter extends AbstractThreadedSyncAdapter
             e.printStackTrace();
             setLocationStatus(getContext(), LOCATION_STATUS_SERVER_INVALID);
         }
-    }
-
-    private void updateWear() {
-        String locationQuery = Utility.getPreferredLocation(getContext());
-
-        Uri weatherUri = WeatherContract.WeatherEntry.buildWeatherLocationWithDate(locationQuery, System.currentTimeMillis());
-        Cursor cursor = getContext().getContentResolver().query(weatherUri, NOTIFY_WEATHER_PROJECTION, null,
-                null, WeatherContract.WeatherEntry.COLUMN_DATE + " ASC");
-
-        if (cursor.moveToFirst()) {
-            int weatherId = cursor.getInt(INDEX_WEATHER_ID);
-            minTemp = cursor.getDouble(INDEX_MIN_TEMP);
-            maxTemp = cursor.getDouble(INDEX_MAX_TEMP);
-
-            Resources resources = getContext().getResources();
-            int artResourceId = Utility.getArtResourceForWeatherCondition(weatherId);
-            String artUrl = Utility.getArtUrlForWeatherCondition(getContext(), weatherId);
-            int largeIconSize = resources.getDimensionPixelSize(R.dimen.notification_large_icon_default);
-
-            try {
-                largeIcon = Glide.with(getContext())
-                        .load(artUrl)
-                        .asBitmap()
-                        .error(artResourceId)
-                        .fitCenter()
-                        .into(largeIconSize, largeIconSize).get();
-            } catch (InterruptedException | ExecutionException e) {
-                Log.d(TAG, "Error retrieving large icon from " + artUrl, e);
-                largeIcon = BitmapFactory.decodeResource(resources, artResourceId);
-            }
-        }
-
-        mGoogleApiClient.connect();
     }
 
     private static Asset createAssetFromBitmap(Bitmap bitmap) {

@@ -148,6 +148,10 @@
         <meta-data
             android:name="com.google.android.geo.API_KEY"
             android:value="AIzaSyDXUBFl9XI_g13ta-Yl3nNb4MTEBNiSGLc" />
+
+        <service
+            android:name=".gcm.RegistrationIntentService"
+            android:exported="false"></service>
     </application>
 
 </manifest>
