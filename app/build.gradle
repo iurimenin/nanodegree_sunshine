@@ -51,6 +51,7 @@ dependencies {
     compile "com.google.firebase:firebase-crash:${firebaseVersion}"
     compile 'com.google.android.apps.muzei:muzei-api:2.0'
     compile 'com.google.android.support:wearable:2.0.1'
+    wearApp project(path: ':wear')
 }
 
 apply plugin: 'com.google.gms.google-services'
